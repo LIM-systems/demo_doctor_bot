@@ -3,9 +3,10 @@ import pathlib
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from doctors.settings import TG_TOKEN
 
 path = pathlib.Path().absolute()
-bot = Bot(token='5641543913:AAGjZSL6GzP_AeWARz8YtmHk-bIaav-A-pY', parse_mode='HTML')
+bot = Bot(token=TG_TOKEN, parse_mode='HTML')
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 

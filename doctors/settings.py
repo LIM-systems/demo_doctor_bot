@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-##p8&e8&($^kwl4#=i0o3)2e(qatnd=-k@)d&_&$*@4(q)^^bs'
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -125,3 +125,5 @@ JAZZMIN_SETTINGS = {
     # Copyright on the footer
     "copyright": "DoctorBOT",
   }
+
+TG_TOKEN = "5841532396:AAGCeTx0unxyaUYt6pBszJjD6y1KJAj59xA"
