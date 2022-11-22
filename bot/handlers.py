@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram import types, executor
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
@@ -9,7 +11,6 @@ from asgiref.sync import sync_to_async, async_to_sync
 import asyncio
 from pathlib import Path
 import aiogram_calendar as calend
-
 
 
 @dp.message_handler(commands=['start'])
@@ -35,8 +36,9 @@ async def doctors_select_specials(call: types.CallbackQuery):
     '''Получаем название специальности, выдаем врачей этой специальности'''
     specials = call.data.split('/')[-1]
     get_specials = await dj.get_doctor_special(specials) + [back]
-    await call.message.edit_text(f'Выберите врача {specials}',
-                              reply_markup=kb.inline_btns(get_specials, f'get_doc/{specials}'))
+    await call.message.edit_text(
+        f'Выберите врача {specials}',
+        reply_markup=kb.inline_btns(get_specials, f'get_doc/{specials}'))
 
 
 @dp.callback_query_handler(Text(startswith='get_doc'))
@@ -47,8 +49,9 @@ async def doctor_details(call: types.CallbackQuery, state: FSMContext):
     special = call.data.split('/')[1]
     if btn == back:
         specials = await dj.get_all_specials()
-        await call.message.edit_text(f'Выберите направление',
-                        reply_markup=kb.inline_btns(specials, 'specials', '▫ '))
+        await call.message.edit_text(
+            f'Выберите направление',
+            reply_markup=kb.inline_btns(specials, 'specials', '▫ '))
     else:
         doctors_details = await dj.get_doctor_detail(btn)
         photo = doctors_details.photo
@@ -81,18 +84,34 @@ async def app_doc(call: types.CallbackQuery):
         await call.message.answer('<b>Выберите дату визита к специалисту</b>',
                                   reply_markup=await calend.SimpleCalendar().start_calendar())
 
+
 @dp.callback_query_handler(calend.simple_cal_callback.filter())
 async def process_simple_calendar(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     '''Выдаем время записи к врачу'''
+    start_day = 10  # начало рабочего дня
+    end_day = 19  # конец рабочего дня
+
     selected, date = await calend.SimpleCalendar().process_selection(call, callback_data)
+    if not date:
+        return
+    hour_now = datetime.now().hour
+    day_now = datetime.now().day
+    day_now_calendar = int(date.strftime("%d"))
+    if hour_now > start_day and day_now_calendar == day_now:
+        start_day = hour_now + 1  # уберем прошедшие часы
+    if hour_now+1 >= end_day and day_now_calendar == day_now:
+        await call.message.answer('<b>К сожалению на сегодня прием окончен. Выберите другую дату</b>')
+        return
     if selected:
         date_str = date.strftime("%Y-%m-%d")
         await call.message.answer(
             f'<b>Вы выбрали дату:</b> {date_str}\n\n<b>Выберите время</b>',
-            reply_markup=kb.inline_btns([f'{x}:00' for x in range(10, 18)], f'write')
+            reply_markup=kb.inline_btns(
+                [f'{x}:00' for x in range(start_day, end_day)], f'write')
         )
         await state.update_data(select_date=date_str)
         await call.message.delete()
+
 
 @dp.callback_query_handler(Text(startswith='write/'))
 async def get_time(call: types.CallbackQuery, state: FSMContext):
@@ -113,22 +132,26 @@ async def get_phone(msg: types.Message, state: FSMContext):
     get_or_create_user = await dj.create_new_user(dict(msg.contact))
     client = await dj.get_client_for_tgid(msg.from_id)
     states.update({'client_id': client.id})
-    print(states)
     await dj.create_new_record(states)
     await msg.answer(f'''Вы успешно записаны на прием:
 <b>{states.get('special')}
 {states.get('doctor')}
 {states.get('select_date')} {states.get('select_time')}</b>
 
-Мы пришлем напоминание за 1 час до визита!
+Мы напомним Вам о визите!
 Спасибо что вы с нами!''', reply_markup=kb.menu_keyboard(main_menu))
+    await asyncio.sleep(10)
+    with open('./media/doctor.png', 'rb') as pic:
+        await msg.answer_photo(pic, caption=f'''<em>Демонстрация напоминания о приеме к врачу!</em>
+Вы записаны на {states.get('select_date')} {states.get('select_time')}
+<b>{states.get('special')}
+{states.get('doctor')}</b>''')
 
 
 @dp.message_handler(Text(equals=main_menu[1]))
 async def about(msg: types.Message):
     with open(f'{Path().absolute()}/media/about.jpg', 'rb') as about:
         await msg.answer_photo(about, caption=texts.about)
-
 
 
 @dp.message_handler(Text(equals=main_menu[2]))
@@ -146,7 +169,6 @@ async def my_records(msg: types.Message):
         await msg.answer(
             my_record,
             reply_markup=kb.inline_btns((cancel,), f'_cancel/{rec.id}'))
-
 
 
 @dp.callback_query_handler(Text(startswith='_cancel/'))
