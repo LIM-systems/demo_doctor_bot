@@ -184,3 +184,14 @@ async def visit_cancel(call: types.CallbackQuery):
     visit_id = call.data.split('/')[1]
     await dj.delete_record_for_id(visit_id)
     await call.message.edit_text(f'Ваша запись отменена')
+
+
+@dp.message_handler(Text(equals=main_menu[3]))
+async def doctors_app(msg: types.Message):
+    '''Сообщение о доступе в админку'''
+    await msg.answer('''ДоктоБОТ имеет web интерфейс для администратора
+Вы можете зайти в него по адресу http://178.210.43.57/admin
+
+При входе введите:
+Логин: <b>demobot</b>
+Пароль: <b>demobot</b>''')
