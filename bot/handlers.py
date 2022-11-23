@@ -147,6 +147,13 @@ async def get_phone(msg: types.Message, state: FSMContext):
 <b>{states.get('special')}
 {states.get('doctor')}</b>''')
 
+    await msg.answer('''ДоктоБОТ имеет web интерфейс для администратора
+Вы можете зайти в него по адресу http://178.210.43.57/admin
+
+При входе введите:
+Логин: <b>demobot</b>
+Пароль: <b>demobot</b>''')
+
 
 @dp.message_handler(Text(equals=main_menu[1]))
 async def about(msg: types.Message):
