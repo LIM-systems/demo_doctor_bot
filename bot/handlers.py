@@ -187,7 +187,7 @@ async def visit_cancel(call: types.CallbackQuery):
 
 
 @dp.message_handler(Text(equals=main_menu[3]))
-async def doctors_app(msg: types.Message):
+async def web_admins(msg: types.Message):
     '''Сообщение о доступе в админку'''
     await msg.answer('''ДоктоБОТ имеет web интерфейс для администратора
 Вы можете зайти в него по адресу http://178.210.43.57/admin
